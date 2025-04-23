@@ -1,0 +1,36 @@
+name: Build .NET Lambda Binary
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.100-preview.1.24123.4'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Publish for linux-x64
+      run: |
+        dotnet publish -c Release -r linux-x64 \
+          --self-contained true \
+          /p:PublishSingleFile=false \
+          /p:UseAppHost=true \
+          /p:IncludeNativeLibrariesForSelfExtract=true
+
+    - name: Upload Lambda binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: lambda-binary
+        path: bin/Release/net9.0/linux-x64/publish/
